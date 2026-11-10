@@ -1,0 +1,27 @@
+{
+  "name": "reveilly",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Réveil qui ne s'arrête qu'après avoir répondu à des questions",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "android": "vite build && cap sync android && cap open android",
+    "apk": "vite build && cap sync android && node scripts/gradle.mjs assembleDebug",
+    "test:android": "node scripts/gradle.mjs test"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.5.3",
+    "@fontsource/cabin": "^5.2.8"
+  },
+  "devDependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/cli": "8.5.3",
+    "jsdom": "^29.1.1",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "appId": "app.reveilly",
+  "appName": "Reveilly",
+  "webDir": "dist",
+  "android": { "backgroundColor": "#000000" }
+}

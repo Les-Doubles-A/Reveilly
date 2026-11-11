@@ -72,6 +72,7 @@ export function renderEdit(root, { store, app, platform, id }) {
     const syncThemes = () => {
       $$('input[data-t]', el).forEach(i => { i.checked = c.themes.includes(i.dataset.t); });
       $('.all', el).textContent = c.themes.length === m.themes.length ? 'Tout décocher' : 'Tout cocher';
+      $('.all', el).hidden = !m.themes.length;
     };
     $$('input[data-t]', el).forEach(i => i.onchange = () => {
       c.themes = m.themes.map(t => t.id).filter(t => t === i.dataset.t ? i.checked : c.themes.includes(t));
@@ -127,7 +128,7 @@ export function renderEdit(root, { store, app, platform, id }) {
 
 function summary(m, c) {
   if (!c.on) return '';
-  const th = c.themes.length === m.themes.length ? 'tous les thèmes' : `${c.themes.length} thème${c.themes.length > 1 ? 's' : ''}`;
+  const th = c.themes.length && c.themes.length === m.themes.length ? 'tous les thèmes' : `${c.themes.length} thème${c.themes.length > 1 ? 's' : ''}`;
   const mode = m.modes ? ' · ' + m.modes.find(x => x.id === c.mode).label.toLowerCase() : '';
   return `${c.count} question${c.count > 1 ? 's' : ''} · ${th}${mode}`;
 }
@@ -139,6 +140,7 @@ function modBlock(m, c) {
       <span class="mod-sum"></span></div>
     <div class="mod-panel" id="p-${m.id}" hidden>
       <div class="mod-head"><b>${esc(m.name)}</b><button type="button" class="lnk all"></button></div>
+      ${!m.themes.length && m.emptyHint ? `<p class="mut">${esc(m.emptyHint)}</p>` : ''}
       <div class="themes">${m.themes.map(t => `<label title="${esc(t.hint || '')}"><input type="checkbox" data-t="${t.id}" ${c.themes.includes(t.id) ? 'checked' : ''}><span>${esc(t.label)}</span></label>`).join('')}</div>
       ${m.modes ? `<div class="seg" role="group" aria-label="Mode de réponse">${m.modes.map(x => `<button type="button" data-mode="${x.id}" aria-pressed="${c.mode === x.id}">${esc(x.label)}</button>`).join('')}</div>` : ''}
       <div class="stepper"><span>Nombre de questions</span>

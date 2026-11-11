@@ -61,7 +61,7 @@ export function renderRing(root, { alarm, test, app, onDone, idleSeconds = 0, pa
           <button type="button" data-k="del" aria-label="Effacer">${ICON.backspace}</button>
           <button type="button" class="ok" id="ok">Valider</button></div>`;
     } else {
-      input = `<form id="frm" class="text-answer" autocomplete="off"><input id="txt" type="text" placeholder="Nom de la figure…" aria-label="Ta réponse" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done"><button class="ok" type="submit">Valider</button></form>`;
+      input = `<form id="frm" class="text-answer" autocomplete="off"><input id="txt" type="text" placeholder="${esc(q.placeholder || 'Nom de la figure…')}" aria-label="Ta réponse" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done"><button class="ok" type="submit">Valider</button></form>`;
     }
     frame(`<section class="qcard">${q.prompt}<p class="msg" id="msg" role="alert"></p>${input}
       <button type="button" class="lnk skip" id="skip">Je ne sais pas</button></section>`);

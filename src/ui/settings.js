@@ -1,13 +1,14 @@
 /* Écran E3 : réglages généraux, état des permissions, test du réveil. */
 import { esc } from '../core/util.js';
 import { $, $$, ICON, toggle, toast } from './dom.js';
+import { importFromFile, exportToFile } from './category.js';
 
 const RAMPS = [[0, 'Non'], [15, '15 s'], [30, '30 s'], [60, '1 min']];
 const IDLES = [[0, 'Non'], [10, '10 s'], [20, '20 s'], [30, '30 s']];
 const MAXES = [[5, '5 min'], [15, '15 min'], [30, '30 min'], [0, 'Jamais']];
 
 export async function renderSettings(root, { store, app, platform }) {
-  const st = store.settings();
+  const st = store.settings(), cats = store.categories();
   root.innerHTML = `<main class="screen settings">
     <header class="top"><h1>Réglages</h1></header>
     <section class="group"><h2>Sonnerie</h2>
@@ -23,11 +24,22 @@ export async function renderSettings(root, { store, app, platform }) {
         <small id="idlehint">${idleHint(st.idleSeconds)}</small></div>
       <div class="field row"><span>Retour haptique</span>${toggle(st.haptics, 'Retour haptique', 'id="hap"')}</div>
     </section>
+    <section class="group"><h2>Mes questions</h2>
+      <ul class="perms cats">${cats.map(c => `<li><button type="button" data-cat="${esc(c.id)}"><span class="pl">${esc(c.name)}<small>${c.questions.length} question${c.questions.length > 1 ? 's' : ''}</small></span>${ICON.chevron}</button></li>`).join('')
+        || '<li class="mut">Aucune catégorie. Créez vos propres questions et réponses, ou importez un fichier JSON.</li>'}</ul>
+      <button type="button" class="save" id="newcat">Nouvelle catégorie</button>
+      <div class="cat-io"><button type="button" class="chip-btn" id="import">Importer un JSON</button><button type="button" class="chip-btn" id="export"${cats.length ? '' : ' disabled'}>Tout exporter</button></div>
+      <small>Activez le module « Perso » dans une alarme pour que ces questions soient posées au réveil.</small>
+      <details class="help"><summary>Format du fichier JSON</summary>
+        <pre>${esc(JSON_EXAMPLE)}</pre>
+        <small>« accepted » (autres réponses justes), « wrong » (pièges du choix multiple) et « explanation » sont facultatifs. Une catégorie du même nom reçoit seulement les questions qui lui manquent.</small>
+      </details>
+    </section>
     <section class="group"><h2>Fiabilité</h2><ul class="perms" id="perms"><li class="mut">Vérification…</li></ul></section>
     <section class="group"><h2>Essayer</h2>
       <button type="button" class="save" id="test">Tester un réveil dans 10 s</button>
       <small>Une question, avec les modules de votre première alarme. Verrouillez le téléphone pour vérifier l’affichage.</small></section>
-    <section class="group about"><img src="logo.png" alt="" width="48" height="47"><div><b>Reveilly</b> 1.0<br><span class="mut">Réveil à questions · fonctionne hors ligne, aucune donnée ne quitte l’appareil.</span></div></section>
+    <section class="group about"><img src="logo.png" alt="" width="48" height="47"><div><b>Reveilly</b> 1.1<br><span class="mut">Réveil à questions · fonctionne hors ligne, aucune donnée ne quitte l’appareil.</span></div></section>
   </main>`;
 
   let mplaying = false;
@@ -54,6 +66,10 @@ export async function renderSettings(root, { store, app, platform }) {
     $('#idlehint', root).textContent = idleHint(+b.dataset.idle);
   });
   $('#hap', root).onclick = e => { const on = !store.settings().haptics; store.saveSettings({ haptics: on }); e.currentTarget.setAttribute('aria-checked', on); app.haptic(); };
+  $$('[data-cat]', root).forEach(b => b.onclick = () => app.category(b.dataset.cat));
+  $('#newcat', root).onclick = () => app.category(null);
+  $('#import', root).onclick = () => importFromFile({ store, platform, app });
+  $('#export', root).onclick = () => exportToFile(platform, store.categories(), 'questions');
   $('#test', root).onclick = async () => {
     await app.scheduleTest(10);
     toast('Réveil de test dans 10 secondes…');
@@ -67,6 +83,23 @@ export async function renderSettings(root, { store, app, platform }) {
     ${!p.ok && !p.info ? `<button type="button" class="lnk" data-fix="${p.id}">Corriger</button>` : ''}</li>`).join('') || '<li class="mut">Indisponible</li>';
   $$('[data-fix]', ul).forEach(b => b.onclick = () => platform.openSettings(b.dataset.fix));
 }
+
+const JSON_EXAMPLE = `{
+  "categories": [
+    {
+      "name": "Capitales",
+      "questions": [
+        {
+          "question": "Capitale de l’Australie ?",
+          "answer": "Canberra",
+          "wrong": ["Sydney", "Melbourne", "Perth"],
+          "explanation": "Canberra a été choisie en 1908."
+        },
+        { "question": "Capitale du Japon ?", "answer": "Tokyo" }
+      ]
+    }
+  ]
+}`;
 
 const idleHint = s => s
   ? `La sonnerie se tait dès que vous touchez l’écran et reprend après ${s} s sans activité.`

@@ -2,13 +2,13 @@
 
 Dépôt GitHub : **https://github.com/Les-Doubles-A/Reveilly**
 
-Réveil Android qui ne s'arrête qu'après avoir répondu juste à des questions : calcul mental et figures de style, avec, pour chaque alarme, le choix des thèmes, du mode (choix multiple ou saisie libre) et du nombre de questions.
+Réveil Android qui ne s'arrête qu'après avoir répondu juste à des questions : calcul mental, figures de style et vos propres questions, avec, pour chaque alarme, le choix des thèmes, du mode (choix multiple ou saisie libre) et du nombre de questions.
 
 ## Lancer
 
 ```bash
 npm install
-npm test            # 34 tests (dates, alarmes, modules, défi)
+npm test            # 53 tests (dates, alarmes, modules, défi, catégories)
 npm run dev         # aperçu dans le navigateur (l'alarme ne sonne que page ouverte)
 ```
 
@@ -35,12 +35,24 @@ Tests natifs : `npm run test:android`.
 
 | Dossier | Contenu |
 |---|---|
-| `src/modules/` | Modules de questions (`math.js`, `figures.js`) repris des pages d'origine ; un module = un fichier + une ligne dans `index.js` |
+| `src/modules/` | Modules de questions (`math.js`, `figures.js` repris des pages d'origine, `custom.js` pour les catégories de l'utilisateur) ; un module = un fichier + une ligne dans `index.js` |
 | `src/core/` | Dates, stockage, session de défi, volume progressif (testés) |
-| `src/ui/` | Écrans : liste, édition, réglages, sonnerie |
+| `src/ui/` | Écrans : liste, édition, réglages, catégories, sonnerie |
 | `src/platform/` | `native.js` (plugin Android) ou `web.js` (aperçu navigateur) |
 | `android/app/src/main/java/app/reveilly/` | Plugin `ReveillyAlarm` : `AlarmManager.setAlarmClock`, service de sonnerie au premier plan, affichage sur écran verrouillé, reprogrammation au démarrage |
 | `product/` | Cadrage : brief, fonctionnalités et critères, architecture, plan, risques et tests |
+
+## Mes questions (catégories personnelles)
+
+Dans **Réglages › Mes questions**, créez des catégories avec vos propres questions et réponses (réponses acceptées, pièges pour le choix multiple, explication), puis activez le module « Perso » dans une alarme. Les catégories s'importent et s'exportent en JSON :
+
+```json
+{ "categories": [ { "name": "Capitales", "questions": [
+  { "question": "Capitale de l'Australie ?", "answer": "Canberra",
+    "accepted": [], "wrong": ["Sydney", "Melbourne"], "explanation": "…" } ] } ] }
+```
+
+Seuls `question` et `answer` sont obligatoires. À l'import, une catégorie du même nom reçoit uniquement les questions qui lui manquent.
 
 ## Ajouter un module de questions
 
@@ -63,9 +75,9 @@ Puis l'ajouter à `MODULES` dans `src/modules/index.js` : il apparaît automatiq
 <!-- installeur-release -->
 ## Installation
 
-Téléchargez **`Reveilly-1.0.0.apk`** depuis la [dernière release](https://github.com/Les-Doubles-A/Reveilly/releases/latest), puis lancez-le.
+Téléchargez **`Reveilly-1.1.0.apk`** depuis la [dernière release](https://github.com/Les-Doubles-A/Reveilly/releases/latest), puis lancez-le.
 
-Copiez l'APK sur le téléphone Android et ouvrez-le (autorisez l'installation depuis des sources inconnues), ou installez-le en USB : `adb install Reveilly-1.0.0.apk`.
+Copiez l'APK sur le téléphone Android et ouvrez-le (autorisez l'installation depuis des sources inconnues), ou installez-le en USB : `adb install Reveilly-1.1.0.apk`.
 
 ### Recréer l'installeur
 

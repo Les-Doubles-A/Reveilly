@@ -27,6 +27,8 @@ export function createNativePlatform() {
     async pauseRinging(seconds) { const r = await P.pauseRinging({ seconds }); return r?.paused !== false; },
     scheduleTest: (seconds, alarm) => P.scheduleTest({ seconds, alarm: toNative(alarm) }),
     async pickSound() { const r = await P.pickSound(); return r?.uri ? { kind: 'file', uri: r.uri, name: r.name } : null; },
+    async saveTextFile(name, text) { return (await P.saveTextFile({ name, text })).saved === true; },
+    async openTextFile() { const r = await P.openTextFile(); return typeof r?.text === 'string' ? r.text : null; },
     preview: (sound, volume) => P.previewSound({ sound: sound.kind === 'file' ? sound.uri : sound.kind, volume }),
     stopPreview: () => P.stopPreview(),
     async permissions() {

@@ -98,7 +98,7 @@ svg { width: 1em; height: 1em; display: block; }
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 #toast button { color: var(--blue); font-weight: 600; }
-body[data-view="edit"] #toast, body[data-view="ring"] #toast { bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); }
+body[data-view="edit"] #toast, body[data-view="category"] #toast, body[data-view="ring"] #toast { bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); }
 
 /* ---------- Édition ---------- */
 .edit { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px); }
@@ -195,6 +195,40 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .perms .opt .dot, .perms .info .dot { color: #e8b84a; }
 .perms .pl { flex: 1; }
 .perms .pl small { display: block; color: var(--mut); font-size: .82rem; }
+.cats li { padding: 0; }
+.cats li.mut { padding: 12px 16px; }
+.cats button { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 12px 16px; min-height: 56px; border-radius: 18px; }
+.cats button svg { color: var(--mut); flex: none; }
+.cats + .save { margin-top: 12px; }
+.cat-io { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 4px; }
+.cat-io .chip-btn { color: var(--tx-2); padding: 8px 16px; }
+.cat-io .chip-btn:disabled { opacity: .45; cursor: default; }
+.chip-btn.danger, .lnk.danger { color: var(--bad); }
+.chip-btn.danger { border-color: #6a2b26; }
+.help { margin-top: 10px; padding: 0 6px; color: var(--tx-2); }
+.help summary { cursor: pointer; color: var(--blue); min-height: 44px; display: flex; align-items: center; }
+.help pre { background: var(--panel); border-radius: 14px; padding: 12px 14px; font-size: .8rem; line-height: 1.35; overflow-x: auto; white-space: pre; margin: 6px 0; }
+
+.cat-count { text-align: center; color: var(--mut); margin: -12px 0 16px; min-height: 1.4em; font-size: .95rem; }
+.qlist { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
+.qitem details { background: var(--panel); border-radius: 22px; }
+.qitem summary { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-height: 56px; cursor: pointer; list-style: none; }
+.qitem summary::-webkit-details-marker { display: none; }
+.qitem summary svg { flex: none; color: var(--mut); transform: rotate(90deg); transition: transform .2s; }
+.qitem details[open] summary svg { transform: rotate(-90deg); }
+.qn { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--navy-2); display: grid; place-items: center; font-size: .9rem; }
+.qs { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qbody { display: grid; gap: 12px; padding: 0 16px 14px; }
+.qbody label { display: grid; gap: 4px; color: var(--tx-2); font-size: .95rem; }
+.qbody small { color: var(--mut); font-size: .82rem; }
+.qbody input, .qbody textarea {
+  width: 100%; font: inherit; font-size: 1.05rem; color: var(--tx); background: #121212; border: 2px solid #3a3a3a;
+  border-radius: 12px; padding: 10px 12px; resize: vertical;
+}
+.qbody input:focus, .qbody textarea:focus { border-color: var(--blue); outline: none; }
+.qbody .lnk { justify-self: start; }
+.add-q { margin: 0 auto 18px; color: var(--tx-2); }
+.cat-edit .cat-io { justify-content: center; margin-top: 16px; }
 .about { display: flex; gap: 14px; align-items: center; color: var(--tx-2); font-size: .92rem; }
 .settings .save { font-size: 1.35rem; }
 

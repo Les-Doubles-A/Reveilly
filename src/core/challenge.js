@@ -6,7 +6,8 @@ import { shuffle } from './util.js';
 export function createChallenge(challenge, { rng = Math.random, limit } = {}) {
   let slots = [];
   for (const [id, c] of Object.entries(challenge || {})) {
-    if (c?.on && moduleById(id) && c.themes?.length) for (let i = 0; i < c.count; i++) slots.push(id);
+    const m = moduleById(id);
+    if (c?.on && m && c.themes?.length && (!m.available || m.available(c))) for (let i = 0; i < c.count; i++) slots.push(id);
   }
   slots = shuffle(slots, rng);
   if (limit) slots = slots.slice(0, limit);

@@ -1,6 +1,6 @@
 {
   "name": "reveilly",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Réveil qui ne s'arrête qu'après avoir répondu à des questions",
   "type": "module",

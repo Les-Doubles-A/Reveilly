@@ -34,6 +34,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 /** Pont JS ↔ natif. Voir src/platform/native.js. */
 @CapacitorPlugin(
         name = "ReveillyAlarm",
@@ -152,6 +157,73 @@ public class ReveillyAlarmPlugin extends Plugin {
         r.put("uri", uri.toString());
         r.put("name", name);
         call.resolve(r);
+    }
+
+    // ---------- Fichiers texte (import / export des catégories) ----------
+
+    private static final int MAX_TEXT_BYTES = 2_000_000;
+
+    @PluginMethod
+    public void saveTextFile(PluginCall call) {
+        Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/json")
+                .putExtra(Intent.EXTRA_TITLE, call.getString("name", "reveilly.json"));
+        startActivityForResult(call, i, "saveTextResult");
+    }
+
+    @ActivityCallback
+    private void saveTextResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        JSObject r = new JSObject();
+        Intent data = result.getData();
+        if (result.getResultCode() != Activity.RESULT_OK || data == null || data.getData() == null) {
+            r.put("saved", false);
+            call.resolve(r);
+            return;
+        }
+        try (OutputStream out = getContext().getContentResolver().openOutputStream(data.getData(), "w")) {
+            if (out == null) throw new java.io.IOException("Flux indisponible");
+            out.write(call.getString("text", "").getBytes(StandardCharsets.UTF_8));
+            r.put("saved", true);
+            call.resolve(r);
+        } catch (Exception e) {
+            call.reject("Écriture impossible", e);
+        }
+    }
+
+    @PluginMethod
+    public void openTextFile(PluginCall call) {
+        // Le type MIME des .json est mal reconnu par certains gestionnaires de fichiers : on accepte tout.
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("*/*");
+        startActivityForResult(call, i, "openTextResult");
+    }
+
+    @ActivityCallback
+    private void openTextResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        Intent data = result.getData();
+        if (result.getResultCode() != Activity.RESULT_OK || data == null || data.getData() == null) {
+            call.resolve(new JSObject());
+            return;
+        }
+        try (InputStream in = getContext().getContentResolver().openInputStream(data.getData())) {
+            if (in == null) throw new java.io.IOException("Flux indisponible");
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            byte[] chunk = new byte[8192];
+            int n;
+            while ((n = in.read(chunk)) != -1) {
+                buf.write(chunk, 0, n);
+                if (buf.size() > MAX_TEXT_BYTES) { call.reject("Fichier trop volumineux (2 Mo maximum)."); return; }
+            }
+            JSObject r = new JSObject();
+            r.put("text", new String(buf.toByteArray(), StandardCharsets.UTF_8));
+            call.resolve(r);
+        } catch (Exception e) {
+            call.reject("Lecture impossible", e);
+        }
     }
 
     @PluginMethod

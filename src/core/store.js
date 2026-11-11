@@ -1,8 +1,9 @@
 /* Alarmes et réglages, persistés en localStorage (quelques Ko). */
 import { MODULES } from '../modules/index.js';
+import { setCustomCategories, normalizeCategory, normalizeCategories, parseCategories, LIMITS } from '../modules/custom.js';
 import { uid, clamp } from './util.js';
 
-const KEY = 'reveilly:alarms:v1', SKEY = 'reveilly:settings:v1';
+const KEY = 'reveilly:alarms:v1', SKEY = 'reveilly:settings:v1', CKEY = 'reveilly:categories:v1';
 
 export const DEFAULT_SETTINGS = { rampSeconds: 30, maxRingMinutes: 15, idleSeconds: 20, masterVolume: 1, haptics: true };
 
@@ -52,7 +53,9 @@ export function validateAlarm(a) {
   const on = MODULES.filter(m => a.challenge[m.id]?.on);
   if (!on.length) return 'Activez au moins un module de questions.';
   const empty = on.find(m => !a.challenge[m.id].themes.length);
-  if (empty) return `Choisissez au moins un thème pour « ${empty.name} ».`;
+  if (empty) return empty.themes.length ? `Choisissez au moins un thème pour « ${empty.name} ».` : `« ${empty.name} » : aucune catégorie. Créez-en dans les Réglages.`;
+  const dry = on.find(m => m.available && !m.available(a.challenge[m.id]));
+  if (dry) return `« ${dry.name} » : les catégories choisies ne contiennent aucune question.`;
   return null;
 }
 
@@ -64,9 +67,19 @@ const browserStorage = () => { try { const s = globalThis.localStorage; s.setIte
 export function createStore(storage = browserStorage()) {
   const listeners = new Set();
   const read = (k, d) => { try { const v = JSON.parse(storage.getItem(k)); return v ?? d; } catch { try { storage.setItem(k + ':corrupt', storage.getItem(k)); } catch {} return d; } };
+  /* Les catégories d'abord : les thèmes du module « Mes questions » en dépendent. */
+  let cats = normalizeCategories(read(CKEY, []));
+  setCustomCategories(cats);
   let alarms = (Array.isArray(read(KEY, [])) ? read(KEY, []) : []).map(normalizeAlarm);
   let settings = { ...DEFAULT_SETTINGS, ...read(SKEY, {}) };
   const persist = () => { try { storage.setItem(KEY, JSON.stringify(alarms)); } catch {} listeners.forEach(f => f()); };
+  /* Une catégorie supprimée disparaît aussi des alarmes. */
+  const persistCats = () => {
+    setCustomCategories(cats);
+    try { storage.setItem(CKEY, JSON.stringify(cats)); } catch {}
+    alarms = alarms.map(normalizeAlarm);
+    persist();
+  };
 
   return {
     list: () => sortAlarms(alarms),
@@ -87,6 +100,44 @@ export function createStore(storage = browserStorage()) {
       const i = alarms.findIndex(x => x.id === id); if (i < 0) return () => {};
       const [gone] = alarms.splice(i, 1); persist();
       return () => { if (!alarms.some(x => x.id === gone.id)) { alarms.push(gone); persist(); } };
+    },
+    categories: () => structuredClone(cats),
+    category: id => structuredClone(cats.find(c => c.id === id) || null),
+    saveCategory(c) {
+      const n = normalizeCategory(c), i = cats.findIndex(x => x.id === n.id);
+      if (i >= 0) cats[i] = n; else if (cats.length < LIMITS.categories) cats.push(n); else throw new Error(`${LIMITS.categories} catégories au maximum.`);
+      persistCats(); return structuredClone(n);
+    },
+    removeCategory(id) {
+      const i = cats.findIndex(x => x.id === id); if (i < 0) return () => {};
+      const before = structuredClone(alarms), [gone] = cats.splice(i, 1); persistCats();
+      return () => {
+        if (cats.some(x => x.id === gone.id)) return;
+        cats.splice(Math.min(i, cats.length), 0, gone); setCustomCategories(cats);
+        try { storage.setItem(CKEY, JSON.stringify(cats)); } catch {}
+        alarms = before.map(normalizeAlarm); persist();
+      };
+    },
+    /* Fusion par nom : une catégorie du même nom reçoit les questions qui lui manquent.
+       Réimporter le même fichier ne crée donc pas de doublons. */
+    importCategories(json) {
+      const incoming = parseCategories(json), key = s => s.toLowerCase().trim();
+      let added = 0, created = 0, skipped = 0;
+      for (const c of incoming) {
+        let t = cats.find(x => key(x.name) === key(c.name));
+        if (!t) {
+          if (cats.length >= LIMITS.categories) { skipped += c.questions.length; continue; }
+          t = normalizeCategory({ name: c.name }); cats.push(t); created++;
+        }
+        const known = new Set(t.questions.map(q => key(q.question)));
+        for (const q of c.questions) {
+          if (known.has(key(q.question))) continue;
+          if (t.questions.length >= LIMITS.questions) { skipped++; continue; }
+          t.questions.push(q); known.add(key(q.question)); added++;
+        }
+      }
+      persistCats();
+      return { created, added, skipped };
     },
     settings: () => ({ ...settings }),
     saveSettings(s) { settings = { ...settings, ...s }; try { storage.setItem(SKEY, JSON.stringify(settings)); } catch {} listeners.forEach(f => f()); return settings; },

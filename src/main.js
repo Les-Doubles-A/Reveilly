@@ -7,6 +7,7 @@ import { createPlatform } from './platform/index.js';
 import { renderList } from './ui/list.js';
 import { renderEdit } from './ui/edit.js';
 import { renderSettings } from './ui/settings.js';
+import { renderCategory } from './ui/category.js';
 import { renderRing } from './ui/ring.js';
 import { $, ICON } from './ui/dom.js';
 
@@ -22,6 +23,7 @@ const app = {
   list: () => show('list'),
   settings: () => show('settings'),
   edit: id => show('edit', { id }),
+  category: id => show('category', { id }),
   refresh: () => show(view),
   haptic(ms = 12) { if (store.settings().haptics) platform.haptic(ms); },
   async scheduleTest(seconds) {
@@ -59,6 +61,7 @@ function show(v, params = {}) {
   if (v === 'list') renderList(root, ctx);
   else if (v === 'settings') renderSettings(root, ctx);
   else if (v === 'edit') renderEdit(root, ctx);
+  else if (v === 'category') renderCategory(root, ctx);
   else if (v === 'ring') renderRing(root, ringing);
   window.scrollTo(0, 0);
 }

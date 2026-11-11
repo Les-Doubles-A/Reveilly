@@ -133,6 +133,25 @@ export function createWebPlatform() {
         i.click();
       });
     },
+    /* Fichiers texte (import / export des catégories). */
+    async saveTextFile(name, text) {
+      const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+      const a = Object.assign(document.createElement('a'), { href: url, download: name });
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      return true;
+    },
+    openTextFile() {
+      return new Promise((resolve, reject) => {
+        const i = Object.assign(document.createElement('input'), { type: 'file', accept: '.json,application/json,text/plain' });
+        i.onchange = () => {
+          const f = i.files[0]; if (!f) return resolve(null);
+          if (f.size > 2e6) return reject(new Error('Fichier trop volumineux (2 Mo maximum).'));
+          f.text().then(resolve, reject);
+        };
+        i.click();
+      });
+    },
     async preview(sound, volume) { await play(sound, volume, 0); preview = setTimeout(stopAudio, 6000); },
     async stopPreview() { clearTimeout(preview); if (!ringing) stopAudio(); },
     async permissions() {
